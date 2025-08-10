@@ -50,6 +50,11 @@ export function suspendVoucher(serial: string) {
   write(updated);
 }
 
+export function unsuspendVoucher(serial: string) {
+  const updated = read().map((v) => (v.serial === serial ? { ...v, suspended: false } : v));
+  write(updated);
+}
+
 export function generateSerial(existing: Set<string>): string {
   for (let i = 0; i < 10000; i++) {
     const n = Math.floor(10000 + Math.random() * 90000).toString();
