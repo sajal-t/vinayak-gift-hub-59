@@ -25,6 +25,17 @@ const Admin = () => {
     setAuthed(localStorage.getItem("vinayak_admin_auth") === "1");
   }, []);
 
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem("vinayak_admin_auth");
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      localStorage.removeItem("vinayak_admin_auth");
+    };
+  }, []);
+
   const onGenerate = () => {
     const next = generateSerial(new Set(vouchers.map((v) => v.serial)));
     setSerial(next);
