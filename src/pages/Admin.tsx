@@ -189,13 +189,14 @@ const onAdd = () => {
                     <TableHead>Date issued</TableHead>
                     <TableHead>Balance</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Suspended on</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {vouchers.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
                         No vouchers yet. Use "Add Voucher" to create one.
                       </TableCell>
                     </TableRow>
@@ -210,6 +211,7 @@ const onAdd = () => {
                           {v.suspended ? "Suspended" : "Valid"}
                         </Badge>
                       </TableCell>
+                      <TableCell>{v.suspendedAt ?? '-'}</TableCell>
                       <TableCell className="text-right">
                         {v.suspended ? (
                           <Button

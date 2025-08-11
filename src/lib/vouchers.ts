@@ -3,6 +3,7 @@ export interface Voucher {
   serial: string; // 5-digit numeric string
   issuedAt: string; // ISO date string
   suspended: boolean;
+  suspendedAt?: string; // ISO date string when suspended
   balance: number;
 }
 
@@ -15,6 +16,7 @@ function read(): Voucher[] {
     return arr.map((v) => ({
       ...v,
       balance: typeof v.balance === "number" ? v.balance : 0,
+      suspendedAt: typeof v.suspendedAt === "string" ? v.suspendedAt : undefined,
     })) as Voucher[];
   } catch {
     return [];
@@ -57,12 +59,13 @@ export function addVoucher(
 }
 
 export function suspendVoucher(serial: string) {
-  const updated = read().map((v) => (v.serial === serial ? { ...v, suspended: true } : v));
+  const today = new Date().toISOString().slice(0, 10);
+  const updated = read().map((v) => (v.serial === serial ? { ...v, suspended: true, suspendedAt: today } : v));
   write(updated);
 }
 
 export function unsuspendVoucher(serial: string) {
-  const updated = read().map((v) => (v.serial === serial ? { ...v, suspended: false } : v));
+  const updated = read().map((v) => (v.serial === serial ? { ...v, suspended: false, suspendedAt: undefined } : v));
   write(updated);
 }
 
