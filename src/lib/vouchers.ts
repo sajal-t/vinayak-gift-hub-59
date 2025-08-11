@@ -3,6 +3,7 @@ export interface Voucher {
   serial: string; // 5-digit numeric string
   issuedAt: string; // ISO date string
   suspended: boolean;
+  balance: number;
 }
 
 const STORAGE_KEY = "vinayak_vouchers";
@@ -10,7 +11,11 @@ const STORAGE_KEY = "vinayak_vouchers";
 function read(): Voucher[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Voucher[]) : [];
+    const arr = raw ? (JSON.parse(raw) as any[]) : [];
+    return arr.map((v) => ({
+      ...v,
+      balance: typeof v.balance === "number" ? v.balance : 0,
+    })) as Voucher[];
   } catch {
     return [];
   }
@@ -28,18 +33,24 @@ export function findVoucherBySerial(serial: string): Voucher | undefined {
   return read().find((v) => v.serial === serial);
 }
 
-export function addVoucher(serial: string, issuedAt: string): { ok: true; voucher: Voucher } | { ok: false; error: string } {
+export function addVoucher(
+  serial: string,
+  issuedAt: string,
+  balance: number = 0
+): { ok: true; voucher: Voucher } | { ok: false; error: string } {
   const valid = /^\d{5}$/.test(serial);
   if (!valid) return { ok: false, error: "Serial must be a 5-digit number" };
   const list = read();
   if (list.some((v) => v.serial === serial)) {
     return { ok: false, error: "Serial already exists" };
   }
+  const normalizedBalance = isNaN(balance) || balance < 0 ? 0 : Math.floor(balance);
   const voucher: Voucher = {
     id: crypto.randomUUID(),
     serial,
     issuedAt,
     suspended: false,
+    balance: normalizedBalance,
   };
   write([voucher, ...list]);
   return { ok: true, voucher };

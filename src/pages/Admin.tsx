@@ -14,6 +14,7 @@ const Admin = () => {
   const [open, setOpen] = useState(false);
   const [serial, setSerial] = useState("");
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [balance, setBalance] = useState<string>("0");
   const [authed, setAuthed] = useState(false);
   const [pwd, setPwd] = useState("");
   useEffect(() => {
@@ -29,18 +30,20 @@ const Admin = () => {
     setSerial(next);
   };
 
-  const onAdd = () => {
-    const res = addVoucher(serial.trim(), date);
-    if (!res.ok) {
-      const msg = (res as { ok: false; error: string }).error;
-      toast({ title: "Could not add voucher", description: msg });
-      return;
-    }
-    setVouchers(getVouchers());
-    setOpen(false);
-    setSerial("");
-    toast({ title: "Voucher created", description: `Serial ${res.voucher.serial}` });
-  };
+const onAdd = () => {
+  const amt = Math.max(0, Math.floor(Number(balance)));
+  const res = addVoucher(serial.trim(), date, amt);
+  if (!res.ok) {
+    const msg = (res as { ok: false; error: string }).error;
+    toast({ title: "Could not add voucher", description: msg });
+    return;
+  }
+  setVouchers(getVouchers());
+  setOpen(false);
+  setSerial("");
+  setBalance("0");
+  toast({ title: "Voucher created", description: `Serial ${res.voucher.serial} • Balance ₹${res.voucher.balance}` });
+};
 
   const onSuspend = (s: string) => {
     suspendVoucher(s);
@@ -140,6 +143,18 @@ const Admin = () => {
                       <label htmlFor="date" className="text-sm">Date of issue</label>
                       <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                     </div>
+                    <div className="grid gap-2">
+                      <label htmlFor="balance" className="text-sm">Initial balance (₹)</label>
+                      <Input
+                        id="balance"
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        step={1}
+                        value={balance}
+                        onChange={(e) => setBalance(e.target.value.replace(/[^0-9]/g, ""))}
+                      />
+                    </div>
                   </div>
                   <DialogFooter>
                     <Button onClick={onAdd}>Create voucher</Button>
@@ -158,6 +173,7 @@ const Admin = () => {
                       {searched.suspended ? "Suspended" : "Valid"}
                     </Badge>
                     <span className="text-muted-foreground">Issued: {searched.issuedAt}</span>
+                    <span className="text-muted-foreground">Balance: ₹{searched.balance ?? 0}</span>
                   </div>
                 ) : (
                   <div className="text-muted-foreground">No voucher found for serial {search}</div>
@@ -171,6 +187,7 @@ const Admin = () => {
                   <TableRow>
                     <TableHead>Serial</TableHead>
                     <TableHead>Date issued</TableHead>
+                    <TableHead>Balance</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
@@ -178,7 +195,7 @@ const Admin = () => {
                 <TableBody>
                   {vouchers.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
                         No vouchers yet. Use "Add Voucher" to create one.
                       </TableCell>
                     </TableRow>
@@ -187,6 +204,7 @@ const Admin = () => {
                     <TableRow key={v.id}>
                       <TableCell className="font-medium">{v.serial}</TableCell>
                       <TableCell>{v.issuedAt}</TableCell>
+                      <TableCell>₹{v.balance ?? 0}</TableCell>
                       <TableCell>
                         <Badge variant={v.suspended ? "destructive" : "default"}>
                           {v.suspended ? "Suspended" : "Valid"}
